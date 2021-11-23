@@ -3,6 +3,16 @@ import React, { useEffect, useState } from "react";
 const ToDoList = () => {
 	const [tasks, setTasks] = useState([]);
 	const [newTask, setNewTask] = useState("");
+	const [taskExists, setTaskExists] = useState(false);
+
+	useEffect(() => {
+		let position = tasks.findIndex(task => task === newTask);
+		if (position === -1) {
+			setTaskExists(false);
+		} else {
+			setTaskExists(true);
+		}
+	}, [newTask]);
 
 	async function getTodos() {
 		let response = await fetch(
@@ -16,7 +26,13 @@ const ToDoList = () => {
 		);
 		let responseJson = await response.json();
 		console.log(responseJson);
+		let tasks = responseJson;
+		return tasks;
 	}
+
+	useEffect(() => {
+		getTodos();
+	}, []);
 
 	async function createTodos() {
 		let response = await fetch(
@@ -33,7 +49,7 @@ const ToDoList = () => {
 		console.log(responseJson);
 	}
 
-	async function updateTodos() {
+	async function updateTodos(tasks) {
 		let response = await fetch(
 			"https://assets.breatheco.de/apis/fake/todos/user/ivanceasa",
 			{
@@ -41,15 +57,16 @@ const ToDoList = () => {
 				headers: {
 					"Content-Type": "application/json"
 				},
-				body: JSON.stringify([
-					{ label: "comer", done: false },
-					{ label: "dormir", done: false }
-				])
+				body: JSON.stringify(tasks)
 			}
 		);
 		let responseJson = await response.json();
 		console.log(responseJson);
 	}
+
+	useEffect(() => {
+		updateTodos(tasks);
+	}, [tasks]);
 
 	async function deleteTodos() {
 		let response = await fetch(
@@ -63,12 +80,17 @@ const ToDoList = () => {
 		);
 		let responseJson = await response.json();
 		console.log(responseJson);
+		createTodos();
+		setTasks([]);
 	}
 
 	const addNewTask = event => {
 		if (event.key.toLowerCase() == "enter" && newTask !== "") {
-			setTasks(tasks.concat(newTask));
-			setNewTask("");
+			let position = tasks.findIndex(task => task === newTask);
+			if (position === -1) {
+				setTasks(tasks.concat(newTask));
+				setNewTask("");
+			}
 		}
 	};
 
@@ -104,10 +126,7 @@ const ToDoList = () => {
 				</ul>
 				<p>{tasks.length + " item left"}</p>
 				<p>
-					<button onClick={getTodos}>Get</button>
-					<button onClick={createTodos}>Create</button>
-					<button onClick={updateTodos}>Update</button>
-					<button onClick={deleteTodos}>Delete</button>
+					<button onClick={deleteTodos}>Delete all tasks</button>
 				</p>
 			</div>
 		</div>
